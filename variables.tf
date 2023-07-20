@@ -2,6 +2,11 @@ variable "environment" {
   description = "The environment"
 }
 
+variable "region" {
+  type    = string
+  default = ""
+}
+
 variable "bucket_name" {
   description = "Bucket name to be created"
 }
@@ -24,6 +29,12 @@ variable "block_public_policy" {
   description = "Set this variable to false is public access is requested."
   type        = bool
   default     = true
+}
+
+variable "cdn_canonical_user_id" {
+  description = "s3 canonical user id"
+  type        = string
+  default     = ""
 }
 
 locals {

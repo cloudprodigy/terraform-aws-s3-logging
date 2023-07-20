@@ -4,16 +4,25 @@ resource "aws_s3_bucket" "s3_bucket" {
   tags   = local.common_tags
 }
 
-resource "aws_s3_bucket_acl" "this" {
-  bucket = aws_s3_bucket.s3_bucket.id
-  acl    = "log-delivery-write"
-}
-
 resource "aws_s3_bucket_versioning" "this" {
   bucket = aws_s3_bucket.s3_bucket.id
   versioning_configuration {
     status = "Disabled"
   }
+}
+
+# Resource to avoid error "AccessControlListNotSupported The bucket does not allow ACLs"
+resource "aws_s3_bucket_ownership_controls" "this" {
+  bucket = aws_s3_bucket.s3_bucket.id
+  rule {
+    object_ownership = "ObjectWriter"
+  }
+}
+
+resource "aws_s3_bucket_acl" "this" {
+  bucket = aws_s3_bucket.s3_bucket.id
+  acl    = "log-delivery-write"
+  depends_on = [aws_s3_bucket_ownership_controls.this]
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
@@ -34,6 +43,12 @@ resource "aws_s3_bucket_policy" "cloudtrail" {
   count  = var.service == "cloudtrail" ? 1 : 0
   bucket = aws_s3_bucket.s3_bucket.id
   policy = data.aws_iam_policy_document.cloudtrail.json
+}
+
+resource "aws_s3_bucket_policy" "cloudfront" {
+  count  = var.service == "cloudfront" ? 1 : 0
+  bucket = aws_s3_bucket.s3_bucket.id
+  policy = data.aws_iam_policy_document.cloudfront.json
 }
 
 resource "aws_s3_bucket_policy" "general" {
